@@ -4,7 +4,7 @@ import java.util.Objects;
 
 /*
  * Breaks long lines between words so descriptions fit in a narrow console
- * (the Eclipse console is narrow). Line breaks that are already in the text are kept,
+ * (Eclipse's console is small). Line breaks that are already in the text are kept,
  * and an indented line stays indented after it's wrapped.
  */
 public final class TextWrap {
