@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import drownedarchive.character.Player;
 import drownedarchive.command.Command;
 import drownedarchive.command.CommandParser;
@@ -21,6 +24,8 @@ import drownedarchive.world.Ruin;
  * without a console.
  */
 public class GameEngine {
+    private static final Logger LOG = LogManager.getLogger(GameEngine.class);
+
     private static final String PROMPT = "> ";
     private static final String GOODBYE = "You swim back toward the surface. The answers will have to wait.";
     static final int CONSOLE_WIDTH = 80;
@@ -76,6 +81,7 @@ public class GameEngine {
         try {
             command = parser.parse(line);
         } catch (InvalidCommandException e) {
+            LOG.info("Invalid command: {}", line);
             return e.getMessage();
         }
         switch (command.getVerb()) {

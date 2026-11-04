@@ -109,4 +109,42 @@ class MainTest {
         assertEquals(Main.EXIT_SUCCESS, result);
         assertTrue(err.toString().contains("won't close"), err.toString());
     }
+
+    private String logWrittenBy(Reader reader) throws IOException {
+        return TestLog.writtenDuring(() -> play(reader));
+    }
+
+    @Test
+    void playLogsSessionStartAndEnd() throws IOException {
+        String log = logWrittenBy(new StringReader("quit\n"));
+        assertTrue(log.contains("Game session started"), log);
+        assertTrue(log.contains("Game session ended"), log);
+    }
+
+    @Test
+    void playLogsSessionEndWhenReadFails() throws IOException {
+        String log = logWrittenBy(new FakeReader("", new IOException("disk on fire"), null));
+        assertTrue(log.contains("Game session ended"), log);
+    }
+
+    @Test
+    void readFailureIsLoggedAsErrorWithItsCause() throws IOException {
+        String log = logWrittenBy(new FakeReader("", new IOException("disk on fire"), null));
+        assertTrue(log.contains("ERROR"), log);
+        assertTrue(log.contains("java.io.IOException: disk on fire"), log);
+    }
+
+    @Test
+    void unexpectedFailureIsLoggedAsErrorWithItsCause() throws IOException {
+        String log = logWrittenBy(new FakeReader("", new IllegalStateException("broken rule"), null));
+        assertTrue(log.contains("ERROR"), log);
+        assertTrue(log.contains("java.lang.IllegalStateException: broken rule"), log);
+    }
+
+    @Test
+    void closeFailureIsLoggedAsWarningWithItsCause() throws IOException {
+        String log = logWrittenBy(new FakeReader("quit\n", null, new IOException("won't close")));
+        assertTrue(log.contains("WARN"), log);
+        assertTrue(log.contains("java.io.IOException: won't close"), log);
+    }
 }

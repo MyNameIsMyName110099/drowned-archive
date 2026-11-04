@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -158,5 +160,18 @@ class GameEngineTest {
         assertTrue(reply.contains("dance"));
         assertTrue(game.isRunning());
         assertEquals("Swim where?", game.handle("swim"));
+    }
+
+    @Test
+    void invalidCommandIsLoggedAndGameContinues() throws IOException {
+        String log = TestLog.writtenDuring(() -> game.handle("dance"));
+        assertTrue(log.contains("Invalid command: dance"), log);
+        assertTrue(game.isRunning());
+    }
+
+    @Test
+    void validCommandIsNotLoggedAsInvalid() throws IOException {
+        String log = TestLog.writtenDuring(() -> game.handle("look"));
+        assertEquals("", log);
     }
 }
