@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,21 +20,21 @@ public class Main {
     static final int EXIT_UNEXPECTED_ERROR = 2;
 
     public static void main(String[] args) {
-        GameEngine game = new GameEngine(RuinLibrary.coralGate());
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         // Exiting only after play() returns: System.exit inside a catch would skip its finally.
-        System.exit(play(game, in, System.out, System.err));
+        System.exit(play(() -> new GameEngine(RuinLibrary.coralGate()), in, System.out, System.err));
     }
 
     /*
      * The top level of the game's exception handling. Anything the game can't recover from
      * ends up here, so the player gets a readable message instead of a stack trace.
-     * Returns the exit code for the process.
+     * The game is built inside the try because a mistake in a ruin's data throws while
+     * it's being built. Returns the exit code for the process.
      */
-    static int play(GameEngine game, BufferedReader in, PrintStream out, PrintStream err) {
+    static int play(Supplier<GameEngine> newGame, BufferedReader in, PrintStream out, PrintStream err) {
         LOG.info("Game session started");
         try {
-            game.run(in, out);
+            newGame.get().run(in, out);
             return EXIT_SUCCESS;
         } catch (IOException e) {
             LOG.error("Could not read player input", e);

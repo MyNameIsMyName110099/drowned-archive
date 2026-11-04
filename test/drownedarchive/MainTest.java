@@ -57,8 +57,28 @@ class MainTest {
     private int play(Reader reader) {
         Ruin ruin = new Ruin("Test Ruin", 1, 1);
         ruin.setStart(ruin.addChamber(0, 0, "Gate", "A broken gate."));
-        return Main.play(new GameEngine(ruin), new BufferedReader(reader),
+        return Main.play(() -> new GameEngine(ruin), new BufferedReader(reader),
                 new PrintStream(out, true), new PrintStream(err, true));
+    }
+
+    private int playBrokenRuin(Reader reader) {
+        return Main.play(() -> {
+            throw new IllegalStateException("broken ruin");
+        }, new BufferedReader(reader), new PrintStream(out, true), new PrintStream(err, true));
+    }
+
+    @Test
+    void playReportsFriendlyMessageWhenGameCannotBeBuilt() {
+        assertEquals(Main.EXIT_UNEXPECTED_ERROR, playBrokenRuin(new StringReader("")));
+        assertTrue(err.toString().contains("Something went wrong"), err.toString());
+    }
+
+    @Test
+    void playLogsFailureAndClosesInputWhenGameCannotBeBuilt() throws IOException {
+        FakeReader reader = new FakeReader("", null, null);
+        String log = TestLog.writtenDuring(() -> playBrokenRuin(reader));
+        assertTrue(log.contains("java.lang.IllegalStateException: broken ruin"), log);
+        assertTrue(reader.closed);
     }
 
     @Test

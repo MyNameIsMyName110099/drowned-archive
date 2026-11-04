@@ -38,8 +38,8 @@ java -cp "out;src;lib/*" drownedarchive.Main
 
 ## Logging
 The game logs to the flat file `logs/drowned-archive.log` using Log4j 2 (jars are in `lib/`, settings
-are in `src/log4j2.xml`). It records when a session starts and ends, commands the game didn't
-understand, and errors with their stack traces. Nothing is logged to the console, so the game text
+are in `src/log4j2.xml`). It records when a session starts and ends, commands the parser rejected,
+and errors with their stack traces. Nothing is logged to the console, so the game text
 stays clean. The `logs/` folder isn't committed.
 
 ## Tests
