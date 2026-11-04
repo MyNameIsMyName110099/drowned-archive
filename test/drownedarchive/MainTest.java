@@ -57,8 +57,28 @@ class MainTest {
     private int play(Reader reader) {
         Ruin ruin = new Ruin("Test Ruin", 1, 1);
         ruin.setStart(ruin.addChamber(0, 0, "Gate", "A broken gate."));
-        return Main.play(new GameEngine(ruin), new BufferedReader(reader),
+        return Main.play(() -> new GameEngine(ruin), new BufferedReader(reader),
                 new PrintStream(out, true), new PrintStream(err, true));
+    }
+
+    private int playBrokenRuin(Reader reader) {
+        return Main.play(() -> {
+            throw new IllegalStateException("broken ruin");
+        }, new BufferedReader(reader), new PrintStream(out, true), new PrintStream(err, true));
+    }
+
+    @Test
+    void playReportsFriendlyMessageWhenGameCannotBeBuilt() {
+        assertEquals(Main.EXIT_UNEXPECTED_ERROR, playBrokenRuin(new StringReader("")));
+        assertTrue(err.toString().contains("Something went wrong"), err.toString());
+    }
+
+    @Test
+    void playLogsFailureAndClosesInputWhenGameCannotBeBuilt() throws IOException {
+        FakeReader reader = new FakeReader("", null, null);
+        String log = TestLog.writtenDuring(() -> playBrokenRuin(reader));
+        assertTrue(log.contains("java.lang.IllegalStateException: broken ruin"), log);
+        assertTrue(reader.closed);
     }
 
     @Test
@@ -108,5 +128,43 @@ class MainTest {
         int result = play(new FakeReader("quit\n", null, new IOException("won't close")));
         assertEquals(Main.EXIT_SUCCESS, result);
         assertTrue(err.toString().contains("won't close"), err.toString());
+    }
+
+    private String logWrittenBy(Reader reader) throws IOException {
+        return TestLog.writtenDuring(() -> play(reader));
+    }
+
+    @Test
+    void playLogsSessionStartAndEnd() throws IOException {
+        String log = logWrittenBy(new StringReader("quit\n"));
+        assertTrue(log.contains("Game session started"), log);
+        assertTrue(log.contains("Game session ended"), log);
+    }
+
+    @Test
+    void playLogsSessionEndWhenReadFails() throws IOException {
+        String log = logWrittenBy(new FakeReader("", new IOException("disk on fire"), null));
+        assertTrue(log.contains("Game session ended"), log);
+    }
+
+    @Test
+    void readFailureIsLoggedAsErrorWithItsCause() throws IOException {
+        String log = logWrittenBy(new FakeReader("", new IOException("disk on fire"), null));
+        assertTrue(log.contains("ERROR"), log);
+        assertTrue(log.contains("java.io.IOException: disk on fire"), log);
+    }
+
+    @Test
+    void unexpectedFailureIsLoggedAsErrorWithItsCause() throws IOException {
+        String log = logWrittenBy(new FakeReader("", new IllegalStateException("broken rule"), null));
+        assertTrue(log.contains("ERROR"), log);
+        assertTrue(log.contains("java.lang.IllegalStateException: broken rule"), log);
+    }
+
+    @Test
+    void closeFailureIsLoggedAsWarningWithItsCause() throws IOException {
+        String log = logWrittenBy(new FakeReader("quit\n", null, new IOException("won't close")));
+        assertTrue(log.contains("WARN"), log);
+        assertTrue(log.contains("java.io.IOException: won't close"), log);
     }
 }

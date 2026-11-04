@@ -31,9 +31,16 @@ then right-click `src/drownedarchive/Main.java` > Run As > Java Application.
 
 **Command line** (from this folder):
 ```
-javac -d out -sourcepath src src/drownedarchive/Main.java
-java -cp out drownedarchive.Main
+javac -proc:none -cp "lib/*" -d out -sourcepath src src/drownedarchive/Main.java
+java -cp "out;src;lib/*" drownedarchive.Main
 ```
+(`src` is on the classpath so Java can find `log4j2.xml`. On macOS or Linux, use `:` instead of `;`.)
+
+## Logging
+The game logs to the flat file `logs/drowned-archive.log` using Log4j 2 (jars are in `lib/`, settings
+are in `src/log4j2.xml`). It records when a session starts and ends, commands the parser rejected,
+and errors with their stack traces. Nothing is logged to the console, so the game text
+stays clean. The `logs/` folder isn't committed.
 
 ## Tests
 The tests use JUnit 5 (included with Eclipse). In Eclipse, right-click the `test` folder >
@@ -42,12 +49,14 @@ Run As > JUnit Test.
 ## Project structure
 ```
 src/drownedarchive/
-  Main.java             starts the game
+  Main.java             starts the game; top-level error handling (try-catch-finally)
   GameEngine.java       game loop; turns each command into what happens next
   TextWrap.java         wraps long text to fit the console
   command/              the verb-noun parser (Verb, Command, CommandParser)
   world/                the map (Direction, Ruin with its Chamber inner class, RuinLibrary)
   character/            the player
+src/log4j2.xml          logging settings
+lib/                    Log4j 2 jars
 test/drownedarchive/    JUnit tests, same layout as src
 ```
 
